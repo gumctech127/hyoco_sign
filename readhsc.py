@@ -18,7 +18,7 @@ class Hyoco:
     def __init__(self) -> None:
         pass
 
-    def replace_paths(filename:str, df):
+    def replace_paths(self, filename:str, df):
         '''
         For Hyoco schedule (*.hsc) files, replaces utf16 little ended path strings, with new path strings.
 
@@ -50,20 +50,21 @@ class Hyoco:
             for byte in newhsc:
                 newFile.write(byte.to_bytes(1, byteorder='little'))
 
-    def make_list():
+    def make_list(self):
         # df = pd.read_csv('list.csv')
         # print (df)
         # print()
         # dd = df.to_dict()
         # print(dd)
 
-        directory_in_str = 'LED_Sign\Monthly_Schedules'
+        # directory_in_str = 'LED_Sign\Monthly_Schedules'
+        directory_in_str = 'C:\\Users\\torpeto\\Downloads\\LED_Sign_Backup_2023-01-30_1942'
         files = os.fsencode(directory_in_str)
 
-        datalist = []
+        pathlist = []
         colnames = ['file','old','new']
         df = pd.DataFrame(columns=colnames)
-            
+                    
         for file in os.listdir(files):
             filename = os.fsdecode(file)
             if filename.endswith(".hsc"):
@@ -71,16 +72,20 @@ class Hyoco:
                 with open(filename, 'rb') as f:
                     hsc = f.read()
 
-                b'C/x00:/x00'
-                # print(oldraw)
-                # p = hsc.find(oldraw)
-                # print(p)
-                # print(hsc[67:94])
+                path_pattern = b'C\x00:\x00.*?(?=\x00\x00)'
+                pathlist = re.findall(path_pattern,hsc)
+                print(len(pathlist))
+                print(pathlist)
+                df['old'] = pathlist
+                # df['old'] = df['oldraw'].decode('utf16')
+                df['file'] = filename
+                print(df)
+        
+        df.to_csv('list.csv', index=False)
 
-                # datalist.append([filename, ,])
-                print(filename)
                 
 
 if __name__ == "__main__":
     # Hyoco.replace_paths(filename, replacementDict)
-    Hyoco.make_list()
+    H = Hyoco()
+    H.make_list()
