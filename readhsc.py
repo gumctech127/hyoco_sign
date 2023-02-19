@@ -30,7 +30,8 @@ class Hyoco:
         df = df.query("file == @filename")
         for index, row in df.iterrows():
             oldraw = (row['old'].encode('utf16')[2:])
-            newraw = (row['new'].encode('utf16')[2:])
+            newraw = row['new'].replace(os.sep, '/')
+            newraw = (newraw.encode('utf16')[2:])
             # Prepend the string length as a bytearray
             oldraw = bytearray([len(oldraw)]) + (b'\x00') + (bytearray(oldraw))
             newraw = bytearray([len(newraw)]) + (b'\x00') + (bytearray(newraw))
@@ -57,35 +58,80 @@ class Hyoco:
         # dd = df.to_dict()
         # print(dd)
 
-        # directory_in_str = 'LED_Sign\Monthly_Schedules'
-        directory_in_str = 'C:\\Users\\torpeto\\Downloads\\LED_Sign_Backup_2023-01-30_1942'
-        files = os.fsencode(directory_in_str)
+        directory = 'LED_Sign\Monthly_Schedules'
+        # directory_in_str = 'C:\\Users\\torpeto\\Downloads\\LED_Sign_Backup_2023-01-30_1942'
+        # files = os.fsencode(directory)
 
         pathlist = []
+        newlist = []
         colnames = ['file','old','new']
-        df = pd.DataFrame(columns=colnames)
-                    
-        for file in os.listdir(files):
-            filename = os.fsdecode(file)
-            if filename.endswith(".hsc"):
-                
-                with open(filename, 'rb') as f:
+
+        df2 = pd.DataFrame(columns=colnames)
+
+        for filename in os.listdir(directory):
+            file = os.path.join(directory, filename)
+            df = pd.DataFrame(columns=colnames)
+            if os.path.isfile(file) and filename.endswith('.hsc'):
+                with open(file, 'rb') as f:
                     hsc = f.read()
 
-                path_pattern = b'C\x00:\x00.*?(?=\x00\x00)'
-                pathlist = re.findall(path_pattern,hsc)
-                print(len(pathlist))
-                print(pathlist)
-                df['old'] = pathlist
-                # df['old'] = df['oldraw'].decode('utf16')
+                path_pattern = b'C\x00:\x00.*?\x00(?:\x00\x00)'
+                pathlist = re.findall(path_pattern, hsc)
+                # Remove duplicates
+                pathlist = list(set(pathlist))
+                pathlist16=[]
+                newlist = []
+                for path in pathlist:
+                    try:
+                        pathlist16.append(path.decode('utf16').strip('\x00'))
+                        # newlist.append(self.getNewPath(pathlist16[-1]).replace('\\','/'))
+                        new = self.getNewPath(pathlist16[-1])
+                        # new = new.replace('Sunday Worship Hrs REVISED-1_Mask.yml','Sunday Worship Hrs REVISED-2_Mask.yml')
+                        # newsep = new.replace(os.sep, '/')
+                        newlist.append(new)
+                    except Exception as e:
+                        print ('Error during path search.  {}'.format(e))
+                df['old'] = pathlist16
                 df['file'] = filename
-                print(df)
-        
-        df.to_csv('list.csv', index=False)
+                df['new'] = newlist
+                # print(df)
+                # Filter out duplicate old paths per schedule
+                # df = df.drop_duplicates(subset=['old'])
+                df2 = pd.concat([df2, df], ignore_index=True)
+                # print(df2)
 
-                
+        # Save to csv file
+        df2.to_csv('list.csv', index=False)
+        return df2
+
+    def getNewPath(self, inpath:str="") -> str:
+        '''
+        Search the file system for each old yml filename, returning the new yml path.
+
+        @param inpath   str old_yml_path
+
+        @retval outpath str new_yml_path
+        '''
+        
+        outpath = None
+        yml = os.path.basename(inpath)
+        # find it first
+        for root, dirs, files in os.walk("LED_Sign", topdown=False):
+            for name in files:
+                if name == yml:
+                    outpath = (os.path.abspath(os.path.join(root, name)))
+                    # print(os.path.join(root, name))
+                    break
+            # for name in dirs:
+            #     print(os.path.join(root, name))
+                    
+        return outpath                
+
 
 if __name__ == "__main__":
     # Hyoco.replace_paths(filename, replacementDict)
     H = Hyoco()
     H.make_list()
+    # H.findFiles(H.make_list())
+    # print(H.getNewPath('C:/Users/Admin/Desktop/LED Sign Messges/Weekly Standard/time-temperature.yml'))
+    H.replace_paths()
