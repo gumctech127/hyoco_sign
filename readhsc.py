@@ -18,50 +18,50 @@ class Hyoco:
     def __init__(self) -> None:
         pass
 
-    def replace_paths(self, filename:str, df):
+    def replace_paths(self, df, directory='LED_Sign\Monthly_Schedules'):
         '''
         For Hyoco schedule (*.hsc) files, replaces utf16 little ended path strings, with new path strings.
 
         @param  str filename    *.hsc file path
         @param  df    dataframe of file, old, and new path strings
         '''
+        schedules = df['file'].drop_duplicates().to_list()
         df = df.reset_index()  # make sure indexes pair with number of rows
-        # Filter by file
-        df = df.query("file == @filename")
-        for index, row in df.iterrows():
-            oldraw = (row['old'].encode('utf16')[2:])
-            newraw = row['new'].replace(os.sep, '/')
-            newraw = (newraw.encode('utf16')[2:])
-            # Prepend the string length as a bytearray
-            oldraw = bytearray([len(oldraw)]) + (b'\x00') + (bytearray(oldraw))
-            newraw = bytearray([len(newraw)]) + (b'\x00') + (bytearray(newraw))
             
-            with open(filename, 'rb') as f:
-                hsc = f.read()
-       
-            # print(oldraw)
-            # p = hsc.find(oldraw)
-            # print(p)
-            # print(hsc[67:94])
+        for filename in schedules:
+            # Filter by file
+            df = df.query("file == @filename")
+            for index, row in df.iterrows():
+                oldraw = (row['old'].encode('utf16')[2:])
+                newraw = row['new'].replace(os.sep, '/')
+                newraw = (newraw.encode('utf16')[2:])
+                # Prepend the string length as a bytearray
+                oldraw = bytearray([len(oldraw)]) + (b'\x00') + (bytearray(oldraw))
+                newraw = bytearray([len(newraw)]) + (b'\x00') + (bytearray(newraw))
+                
+                with open(os.path.join(directory, filename), 'rb') as f:
+                    hsc = f.read()
+        
+                # print(oldraw)
+                # p = hsc.find(oldraw)
+                # print(p)
+                # print(hsc[67:94])
 
-            newhsc = hsc.replace(oldraw, newraw)
-            outname = os.path.join('out', os.path.basename(filename))
-            newFile = open(outname, "wb")
-            # write to file
-            for byte in newhsc:
-                newFile.write(byte.to_bytes(1, byteorder='little'))
+                newhsc = hsc.replace(oldraw, newraw)
+                outname = os.path.join('out', os.path.basename(filename))
+                newFile = open(outname, "wb")
+                # write to file
+                for byte in newhsc:
+                    newFile.write(byte.to_bytes(1, byteorder='little'))
 
-    def make_list(self):
-        # df = pd.read_csv('list.csv')
-        # print (df)
-        # print()
-        # dd = df.to_dict()
-        # print(dd)
-
-        directory = 'LED_Sign\Monthly_Schedules'
-        # directory_in_str = 'C:\\Users\\torpeto\\Downloads\\LED_Sign_Backup_2023-01-30_1942'
-        # files = os.fsencode(directory)
-
+    def make_list(self, directory='LED_Sign\Monthly_Schedules'):
+        '''
+        Make a CSV of Hyoco Schedule files, old yml path, new yml path
+        
+        @param directory    str directory path of .hsc shedule files
+        
+        @return df  Pandas Dataframe of csv content
+        '''
         pathlist = []
         newlist = []
         colnames = ['file','old','new']
@@ -131,7 +131,6 @@ class Hyoco:
 if __name__ == "__main__":
     # Hyoco.replace_paths(filename, replacementDict)
     H = Hyoco()
-    H.make_list()
-    # H.findFiles(H.make_list())
+    # H.make_list()
     # print(H.getNewPath('C:/Users/Admin/Desktop/LED Sign Messges/Weekly Standard/time-temperature.yml'))
-    H.replace_paths()
+    H.replace_paths(H.make_list())
