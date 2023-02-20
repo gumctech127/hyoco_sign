@@ -3,26 +3,25 @@ import os
 import re
 
 
-filename = 'test.hsc'
-oldEnc = 'C:/Users/Admin/Desktop/LED Sign Messges/Weekly Standard/time-temperature.yml'
-newEnc = 'C:/Users/GUM User/LED_Sign/Weekly_Standard/time-temperature.yml'
+# filename = 'test.hsc'
+# oldEnc = 'C:/Users/Admin/Desktop/LED Sign Messges/Weekly Standard/time-temperature.yml'
+# newEnc = 'C:/Users/GUM User/LED_Sign/Weekly_Standard/time-temperature.yml'
 
-# Sample dict
-replacementDict = {'file': {0: filename}, 'old': {0: oldEnc}, 'new': {0: newEnc}}
+# # Sample dict
+# replacementDict = {'file': {0: filename}, 'old': {0: oldEnc}, 'new': {0: newEnc}}
 
 
 class Hyoco:
     '''
     Hyoco LED Sign software utilities
     '''
-    def __init__(self) -> None:
-        pass
+    def __init__(self, directory='LED_Sign\Monthly_Schedules') -> None:
+        self.directory = directory
 
-    def replace_paths(self, df, directory='LED_Sign\Monthly_Schedules'):
+    def replace_paths(self, df):
         '''
         For Hyoco schedule (*.hsc) files, replaces utf16 little ended path strings, with new path strings.
 
-        @param  str filename    *.hsc file path
         @param  df    dataframe of file, old, and new path strings
         '''
         schedules = df['file'].drop_duplicates().to_list()
@@ -30,35 +29,29 @@ class Hyoco:
             
         for filename in schedules:
             # Filter by file
-            df = df.query("file == @filename")
-            for index, row in df.iterrows():
-                oldraw = (row['old'].encode('utf16')[2:])
-                newraw = row['new'].replace(os.sep, '/')
-                newraw = (newraw.encode('utf16')[2:])
-                # Prepend the string length as a bytearray
-                oldraw = bytearray([len(oldraw)]) + (b'\x00') + (bytearray(oldraw))
-                newraw = bytearray([len(newraw)]) + (b'\x00') + (bytearray(newraw))
+            df2 = df.query("file == @filename")
+            with open(os.path.join(self.directory, filename), 'rb') as f:
+                hsc = f.read()
                 
-                with open(os.path.join(directory, filename), 'rb') as f:
-                    hsc = f.read()
-        
-                # print(oldraw)
-                # p = hsc.find(oldraw)
-                # print(p)
-                # print(hsc[67:94])
+            for index, row in df2.iterrows():
+                oldraw = (row['old'].encode('utf16')[2:])
+                if row['new']:
+                    newraw = row['new'].replace(os.sep, '/')
+                    newraw = (newraw.encode('utf16')[2:])
+                    # Prepend the string length as a bytearray
+                    oldraw = bytearray([len(oldraw)]) + (b'\x00') + (bytearray(oldraw))
+                    newraw = bytearray([len(newraw)]) + (b'\x00') + (bytearray(newraw))
+                    newhsc = hsc.replace(oldraw, newraw)
+            
+            outname = os.path.join('out', os.path.basename(filename))
+            newFile = open(outname, "wb")
+            # write to file
+            for byte in newhsc:
+                newFile.write(byte.to_bytes(1, byteorder='little'))
 
-                newhsc = hsc.replace(oldraw, newraw)
-                outname = os.path.join('out', os.path.basename(filename))
-                newFile = open(outname, "wb")
-                # write to file
-                for byte in newhsc:
-                    newFile.write(byte.to_bytes(1, byteorder='little'))
-
-    def make_list(self, directory='LED_Sign\Monthly_Schedules'):
+    def make_list(self):
         '''
         Make a CSV of Hyoco Schedule files, old yml path, new yml path
-        
-        @param directory    str directory path of .hsc shedule files
         
         @return df  Pandas Dataframe of csv content
         '''
@@ -68,8 +61,8 @@ class Hyoco:
 
         df2 = pd.DataFrame(columns=colnames)
 
-        for filename in os.listdir(directory):
-            file = os.path.join(directory, filename)
+        for filename in os.listdir(self.directory):
+            file = os.path.join(self.directory, filename)
             df = pd.DataFrame(columns=colnames)
             if os.path.isfile(file) and filename.endswith('.hsc'):
                 with open(file, 'rb') as f:
