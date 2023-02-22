@@ -15,7 +15,7 @@ class Hyoco:
     '''
     Hyoco LED Sign software utilities
     '''
-    def __init__(self, directory='LED_Sign\Monthly_Schedules') -> None:
+    def __init__(self, directory='..\Monthly_Schedules') -> None:
         self.directory = directory
 
     def replace_paths(self, df):
@@ -49,7 +49,7 @@ class Hyoco:
             for byte in newhsc:
                 newFile.write(byte.to_bytes(1, byteorder='little'))
 
-    def make_list(self):
+    def make_list(self, hsc_directory='..\Monthly_Schedules'):
         '''
         Make a CSV of Hyoco Schedule files, old yml path, new yml path
         
@@ -61,7 +61,7 @@ class Hyoco:
 
         df2 = pd.DataFrame(columns=colnames)
 
-        for filename in os.listdir(self.directory):
+        for filename in os.listdir(hsc_directory):
             file = os.path.join(self.directory, filename)
             df = pd.DataFrame(columns=colnames)
             if os.path.isfile(file) and filename.endswith('.hsc'):
@@ -109,7 +109,7 @@ class Hyoco:
         outpath = None
         yml = os.path.basename(inpath)
         # find it first
-        for root, dirs, files in os.walk("LED_Sign", topdown=False):
+        for root, dirs, files in os.walk(os.path.join(self.directory,".."), topdown=False):
             for name in files:
                 if name == yml:
                     outpath = (os.path.abspath(os.path.join(root, name)))
