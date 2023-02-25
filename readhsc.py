@@ -49,7 +49,7 @@ class Hyoco:
             for byte in newhsc:
                 newFile.write(byte.to_bytes(1, byteorder='little'))
 
-    def make_list(self, hsc_directory='..\Monthly_Schedules'):
+    def make_list(self):
         '''
         Make a CSV of Hyoco Schedule files, old yml path, new yml path
         
@@ -61,7 +61,7 @@ class Hyoco:
 
         df2 = pd.DataFrame(columns=colnames)
 
-        for filename in os.listdir(hsc_directory):
+        for filename in os.listdir(self.directory):
             file = os.path.join(self.directory, filename)
             df = pd.DataFrame(columns=colnames)
             if os.path.isfile(file) and filename.endswith('.hsc'):
@@ -99,7 +99,7 @@ class Hyoco:
 
     def getNewPath(self, inpath:str="") -> str:
         '''
-        Search the file system for each old yml filename, returning the new yml path.
+        Search the file system, starting at the parent of the default schedules folder for each old yml filename, returning the new yml path.
 
         @param inpath   str old_yml_path
 
@@ -123,7 +123,7 @@ class Hyoco:
 
 if __name__ == "__main__":
     # Hyoco.replace_paths(filename, replacementDict)
-    H = Hyoco()
-    # H.make_list()
+    H = Hyoco(directory='LED_Sign\Monthly_Schedules')
+    H.make_list()
     # print(H.getNewPath('C:/Users/Admin/Desktop/LED Sign Messges/Weekly Standard/time-temperature.yml'))
-    H.replace_paths(H.make_list())
+    # H.replace_paths(H.make_list())
