@@ -31,7 +31,7 @@ class Hyoco:
             # Filter by file
             df2 = df.query("file == @filename")
             with open(os.path.join(self.directory, filename), 'rb') as f:
-                hsc = f.read()
+                newhsc = f.read()
                 
             for index, row in df2.iterrows():
                 oldraw = (row['old'].encode('utf16')[2:])
@@ -41,7 +41,7 @@ class Hyoco:
                     # Prepend the string length as a bytearray
                     oldraw = bytearray([len(oldraw)]) + (b'\x00') + (bytearray(oldraw))
                     newraw = bytearray([len(newraw)]) + (b'\x00') + (bytearray(newraw))
-                    newhsc = hsc.replace(oldraw, newraw)
+                    newhsc = newhsc.replace(oldraw, newraw)
             
             outname = os.path.join('out', os.path.basename(filename))
             newFile = open(outname, "wb")
@@ -123,7 +123,7 @@ class Hyoco:
 
 if __name__ == "__main__":
     # Hyoco.replace_paths(filename, replacementDict)
-    H = Hyoco(directory='LED_Sign\Monthly_Schedules')
-    H.make_list()
+    H = Hyoco(directory='..\Monthly_Schedules')
+    # H.make_list()
     # print(H.getNewPath('C:/Users/Admin/Desktop/LED Sign Messges/Weekly Standard/time-temperature.yml'))
-    # H.replace_paths(H.make_list())
+    H.replace_paths(H.make_list())
