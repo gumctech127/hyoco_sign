@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Monthly_Schedules"
+		},
+		{
+			"path": "../Monthly_Schedules_fix"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {}
+}

@@ -7,10 +7,6 @@ import re
 # oldEnc = 'C:/Users/Admin/Desktop/LED Sign Messges/Weekly Standard/time-temperature.yml'
 # newEnc = 'C:/Users/GUM User/LED_Sign/Weekly_Standard/time-temperature.yml'
 
-# # Sample dict
-# replacementDict = {'file': {0: filename}, 'old': {0: oldEnc}, 'new': {0: newEnc}}
-
-
 class Hyoco:
     '''
     Hyoco LED Sign software utilities
@@ -122,7 +118,6 @@ class Hyoco:
 
 
 if __name__ == "__main__":
-    # Hyoco.replace_paths(filename, replacementDict)
     H = Hyoco(directory='..\Monthly_Schedules')
     # H.make_list()
     # print(H.getNewPath('C:/Users/Admin/Desktop/LED Sign Messges/Weekly Standard/time-temperature.yml'))
